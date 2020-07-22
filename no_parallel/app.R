@@ -1,4 +1,7 @@
 library(shiny)
+library(future)
+library(promises)
+plan(multiprocess)
 
 helper <- function(iteration = 0) {
     shiny::showNotification(glue::glue("Firing request {iteration}"))
@@ -17,7 +20,11 @@ ui <- fluidPage(
         ),
 
         mainPanel(
-            h3(textOutput("time"))
+            textOutput("output1"),
+            textOutput("output2"),
+            textOutput("output3"),
+            textOutput("output4"),
+            textOutput("output5")
         )
     )
 )
@@ -25,33 +32,20 @@ ui <- fluidPage(
 server <- function(input, output) {
     time_taken <- reactiveVal(0)
 
-    var1 <- reactiveVal(NA)
-    var2 <- reactiveVal(NA)
-    var3 <- reactiveVal(NA)
-    var4 <- reactiveVal(NA)
-    var5 <- reactiveVal(NA)
+    button_click <- reactiveVal(0)
 
-    observeEvent(input$try, {
-        start <- Sys.time()
+    var1 <- reactive({print(input$try); helper(1)})
+    var2 <- reactive({print(input$try); helper(2)})
+    var3 <- reactive({print(input$try); helper(3)})
+    var4 <- reactive({print(input$try); helper(4)})
+    var5 <- reactive({print(input$try); helper(5)})
 
-        var1(helper(1))
-        var2(helper(2))
-        var3(helper(3))
-        var4(helper(4))
-        var5(helper(5))
 
-        finished <- Sys.time()
-        elapsed <- finished - start
-        time_taken(elapsed)
-    })
-
-    output$time <- renderText({
-        if(time_taken() == 0) {
-            "Please click the button!"
-        } else {
-            glue::glue("It took {time_taken()} seconds to fire 5 requests")
-        }
-    })
+    output$output1 <- renderText(capture.output(print(var1())))
+    output$output2 <- renderText(capture.output(print(var2())))
+    output$output3 <- renderText(capture.output(print(var3())))
+    output$output4 <- renderText(capture.output(print(var4())))
+    output$output5 <- renderText(capture.output(print(var5())))
 
 }
 
