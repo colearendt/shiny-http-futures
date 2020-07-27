@@ -3,14 +3,14 @@ library(future)
 library(promises)
 plan(multiprocess)
 
-helper <- function(iteration = 0, duration = 2) {
+helper <- function(iteration = 0, duration = 3) {
     res <- httr::GET(glue::glue("https://colorado.rstudio.com/rsc/plumber-load-test/echo?sleep={duration}&msg='hello'&copies=10"))
     return(res)
 }
 
 ui <- fluidPage(
 
-    titlePanel("Shiny HTTP Futures"),
+    titlePanel("Shiny HTTP Futures - No Parallel"),
 
     sidebarLayout(
         sidebarPanel(
