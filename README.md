@@ -42,3 +42,23 @@ requests / more
 caching](https://shiny.rstudio.com/articles/plot-caching.html) so that _when
 computing_ things are managable, but _computation is needed less frequently_.
 - [More reading on promises](https://rstudio.github.io/promises/articles/shiny.html)
+
+## Differences
+
+To highlight the differences between the app approaches:
+
+```
+$ diff no_parallel/app.R parallel/app.R -y --suppress-common-lines
+    titlePanel("Shiny HTTP Futures - No Parallel"),           |     titlePanel("Shiny HTTP Futures - Parallel"),
+    var1 <- eventReactive(input$try, helper(1))               |     var1 <- eventReactive(input$try, future({helper(1)}))
+    var2 <- eventReactive(input$try, helper(2))               |     var2 <- eventReactive(input$try, future({helper(2)}))
+    var3 <- eventReactive(input$try, helper(3))               |     var3 <- eventReactive(input$try, future({helper(3)}))
+    var4 <- eventReactive(input$try, helper(4))               |     var4 <- eventReactive(input$try, future({helper(4)}))
+    var5 <- eventReactive(input$try, helper(5))               |     var5 <- eventReactive(input$try, future({helper(5)}))
+                                                              |
+    output$output1 <- renderText(var1() %>% print() %>% captu |     output$output1 <- renderText(var1() %...>% print() %...>%
+    output$output2 <- renderText(var2() %>% print() %>% captu |     output$output2 <- renderText(var2() %...>% print() %...>%
+    output$output3 <- renderText(var3() %>% print() %>% captu |     output$output3 <- renderText(var3() %...>% print() %...>%
+    output$output4 <- renderText(var4() %>% print() %>% captu |     output$output4 <- renderText(var4() %...>% print() %...>%
+    output$output5 <- renderText(var5() %>% print() %>% captu |     output$output5 <- renderText(var5() %...>% print() %...>%
+```
