@@ -3,10 +3,8 @@ library(future)
 library(promises)
 plan(multiprocess)
 
-helper <- function(iteration = 0) {
-    shiny::showNotification(glue::glue("Firing request {iteration}"))
-    res <- httr::GET("https://colorado.rstudio.com/rsc/plumber-load-test/echo?sleep=3&msg='hello'&copies=10")
-    shiny::showNotification(glue::glue("Done with request {iteration}"))
+helper <- function(iteration = 0, duration = 2) {
+    res <- httr::GET(glue::glue("https://colorado.rstudio.com/rsc/plumber-load-test/echo?sleep={duration}&msg='hello'&copies=10"))
     return(res)
 }
 
@@ -16,10 +14,12 @@ ui <- fluidPage(
 
     sidebarLayout(
         sidebarPanel(
-            actionButton("try", "Try Again")
+            actionButton("try", "Try Again"),
+            actionButton("done", "Click when Done")
         ),
 
         mainPanel(
+            h3(textOutput("time_text")),
             textOutput("output1"),
             textOutput("output2"),
             textOutput("output3"),
@@ -32,21 +32,37 @@ ui <- fluidPage(
 server <- function(input, output) {
     time_taken <- reactiveVal(0)
 
-    button_click <- reactiveVal(0)
+    start_time <- reactiveVal(0)
+    done_time <- reactiveVal(0)
 
-    var1 <- reactive({print(input$try); helper(1)})
-    var2 <- reactive({print(input$try); helper(2)})
-    var3 <- reactive({print(input$try); helper(3)})
-    var4 <- reactive({print(input$try); helper(4)})
-    var5 <- reactive({print(input$try); helper(5)})
+    observeEvent(input$try, {
+        start_time(Sys.time())
+        done_time(0)
+    })
 
+    observeEvent(input$done, {
+        done_time(Sys.time())
+    })
 
-    output$output1 <- renderText(capture.output(print(var1())))
-    output$output2 <- renderText(capture.output(print(var2())))
-    output$output3 <- renderText(capture.output(print(var3())))
-    output$output4 <- renderText(capture.output(print(var4())))
-    output$output5 <- renderText(capture.output(print(var5())))
+    output$time_text <- renderText({
+        if(done_time() == 0) {
+            "Time not computed yet..."
+        } else {
+            glue::glue("Requests took {done_time() - start_time()} seconds")
+        }
+    })
 
+    var1 <- eventReactive(input$try, helper(1))
+    var2 <- eventReactive(input$try, helper(2))
+    var3 <- eventReactive(input$try, helper(3))
+    var4 <- eventReactive(input$try, helper(4))
+    var5 <- eventReactive(input$try, helper(5))
+
+    output$output1 <- renderText(var1() %>% print() %>% capture.output())
+    output$output2 <- renderText(var2() %>% print() %>% capture.output())
+    output$output3 <- renderText(var3() %>% print() %>% capture.output())
+    output$output4 <- renderText(var4() %>% print() %>% capture.output())
+    output$output5 <- renderText(var5() %>% print() %>% capture.output())
 }
 
 shinyApp(ui = ui, server = server)
